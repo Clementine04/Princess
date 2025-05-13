@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Quiz Results - Aral A.I{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/quiz_result.css') }}">
+{% endblock %}
+{% block content %}
+  <div class="welcome-section">
+    <h1>Quiz Results</h1>
+    <p class="tagline">See how well you did</p>
+  </div>
+
+  <div class="result-container">
+    <div class="score-summary">
+      <div class="result-score-container">
+        <div class="score-card">
+          <div class="score-circle">
+            <div class="circle-inner">
+              <span class="score-value">{{ score }}<span class="score-divider">/</span>{{ attempted }}</span>
+              <span class="score-label">Score</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="result-message">
+        {% if percentage >= 90 %}
+          <div class="message excellent">
+            <i class="fas fa-award"></i>
+            <p>Excellent! You've mastered this topic!</p>
+          </div>
+        {% elif percentage >= 75 %}
+          <div class="message great">
+            <i class="fas fa-thumbs-up"></i>
+            <p>Great job! You have a good understanding.</p>
+          </div>
+        {% elif percentage >= 60 %}
+          <div class="message good">
+            <i class="fas fa-smile"></i>
+            <p>Good effort! Keep practicing to improve.</p>
+          </div>
+        {% else %}
+          <div class="message needs-improvement">
+            <i class="fas fa-book"></i>
+            <p>Keep studying! You'll get there.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <h2 class="breakdown-title">Question Breakdown</h2>
+    <div class="breakdown">
+      {% for item in breakdown %}
+        <div class="question-card {% if item.is_correct %}correct{% else %}incorrect{% endif %}">
+          <div class="question-header">
+            <span class="question-number">{{ item.question_number }}</span>
+            <span class="result-icon">
+              {% if item.is_correct %}
+                <i class="fas fa-check-circle"></i>
+              {% else %}
+                <i class="fas fa-times-circle"></i>
+              {% endif %}
+            </span>
+          </div>
+          <p class="question-text">{{ item.question_text }}</p>
+          <div class="answer-section">
+            <div class="user-answer">
+              <span class="answer-label">Your Answer</span>
+              <div class="answer-text {% if item.is_correct %}correct{% else %}incorrect{% endif %}">
+                {{ item.user_answer }}
+              </div>
+            </div>
+            {% if not item.is_correct %}
+              <div class="correct-answer">
+                <span class="answer-label">Correct Answer</span>
+                <div class="answer-text correct">
+                  {{ item.correct_answer }}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="button-group">
+      <a href="{{ url_for('quiz_options') }}" class="btn new-quiz-btn">
+        <i class="fas fa-sync-alt"></i> New Quiz
+      </a>
+      <a href="{{ url_for('dashboard') }}" class="btn back-btn">
+        <i class="fas fa-home"></i> Dashboard
+      </a>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Animate score card
+      setTimeout(() => {
+        document.querySelector('.score-card').classList.add('animate');
+      }, 300);
+      
+      // Animate question cards with cascading effect
+      const questions = document.querySelectorAll('.question-card');
+      questions.forEach((card, index) => {
+        setTimeout(() => {
+          card.classList.add('animate');
+        }, 500 + (index * 150));
+      });
+    });
+  </script>
+{% endblock %}

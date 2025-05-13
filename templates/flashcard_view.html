@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% block title %}Flashcards - {{ subject }} - Princess's Website{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/flashcard_view.css') }}">
+{% endblock %}
+{% block content %}
+ 
+  <div class="flashcard-page">
+    <div class="subject-info" data-subject="{{ subject or 'Default Subject' }}" data-topic="{{ topic or 'Default Topic' }}">
+      <h2 class="subject">Subject: <span>{{ subject or "Default Subject" }}</span></h2>
+      <h3 class="topic">Topic: <span>{{ topic or "Default Topic" }}</span></h3>
+    </div>
+
+    <div class="view-mode-toggle">
+      <button class="mode-btn active" data-mode="flip">
+        <i class="fas fa-sync-alt"></i> Flip Mode
+      </button>
+      <button class="mode-btn" data-mode="scroll">
+        <i class="fas fa-list"></i> Scroll Mode
+      </button>
+      <button class="shuffle-btn" id="shuffleCards">
+        <i class="fas fa-random"></i> Shuffle Cards
+      </button>
+    </div>
+
+    <!-- Flip Mode View -->
+    <section class="flip-container" id="flipMode">
+      <div class="controls">
+        <button class="control-btn" id="prevCard"><i class="fas fa-chevron-left"></i></button>
+        <div class="card-counter">Card <span id="currentCard">1</span> of <span id="totalCards">{{ flashcards|length }}</span></div>
+        <button class="control-btn" id="nextCard"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      
+      <div class="flip-card-container" data-total-cards="{{ flashcards|length }}">
+        {% for card in flashcards %}
+          <div class="flip-card {% if loop.index == 1 %}active{% endif %}" data-index="{{ loop.index }}">
+            <div class="flip-card-inner">
+              <div class="flip-card-front">
+                <div class="card-content">
+                  <h4 class="side-label">QUESTION</h4>
+                  <div class="question-text">{{ card.question }}</div>
+                </div>
+                <div class="reveal-message">
+                  <i class="fas fa-sync"></i>
+                  <span>Click to reveal answer</span>
+                </div>
+              </div>
+              <div class="flip-card-back">
+                <div class="card-content">
+                  <h4 class="side-label">ANSWER</h4>
+                  <div class="answer-text">{{ card.answer }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Scroll Mode View -->
+    <section class="scroll-container" id="scrollMode" style="display: none;">
+      {% for card in flashcards %}
+        <div class="scroll-card">
+          <div class="question-block">
+            <div class="label">Question</div>
+            <p class="question-text selectable">{{ card.question }}</p>
+          </div>
+          <div class="toggle-answer">
+            <div class="plus-icon"><i class="fas fa-plus"></i></div>
+            <div class="answer-label">Show Answer</div>
+          </div>
+          <div class="answer-block">
+            <p class="answer-text selectable">{{ card.answer }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+
+    <div class="button-row">
+      <a href="{{ url_for('flashcard', topic_id=topic_id) if topic_id is defined else url_for('create_topic') }}" class="btn create-btn">
+        <i class="fas fa-plus-circle"></i> Create More
+      </a>
+      <a href="{{ url_for('view_subject', subject_id=session.get('subject_id', 1)) }}" class="btn back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Topics
+      </a>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Fix vertical text issues by replacing newlines with spaces
+      document.querySelectorAll('.question-text, .answer-text').forEach(element => {
+        // Replace new lines with spaces to prevent vertical stacking
+        const text = element.innerHTML.replace(/\n/g, ' ');
+        element.innerHTML = text;
+      });
+      
+      // Toggle between view modes
+      const modeButtons = document.querySelectorAll('.mode-btn');
+      const flipMode = document.getElementById('flipMode');
+      const scrollMode = document.getElementById('scrollMode');
+      
+      // Get all cards
+      const flipCards = document.querySelectorAll('.flip-card');
+      const scrollCards = document.querySelectorAll('.scroll-card');
+      const flipCardContainer = document.querySelector('.flip-card-container');
+      
+      console.log("Found flip cards:", flipCards.length);
+      
+      // Debug info for card rendering
+      if (flipCardContainer) {
+        const totalFlashcards = flipCardContainer.getAttribute('data-total-cards');
+        console.log("Total flashcards in backend data:", totalFlashcards);
+      }
+      
+      const frontCards = document.querySelectorAll('.flip-card-front');
+      const backCards = document.querySelectorAll('.flip-card-back');
+      console.log("Front cards found:", frontCards.length);
+      console.log("Back cards found:", backCards.length);
+      
+      if (frontCards.length === 0) {
+        console.error("No front cards found, check template rendering!");
+      }
+      
+      // Handle reveal message click separately for better UX
+      document.querySelectorAll('.reveal-message').forEach(message => {
+        message.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const card = this.closest('.flip-card');
+          if (card) {
+            const cardInner = card.querySelector('.flip-card-inner');
+            cardInner.classList.add('flipped');
+            
+            // Add visual feedback
+            if (navigator.vibrate) navigator.vibrate(50);
+          }
+        });
+      });
+      
+      // Card Flip functionality
+      flipCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+          // Flip the card unless clicking on specific elements
+          if (e.target.classList.contains('question-text') || 
+              e.target.classList.contains('answer-text') ||
+              e.target.closest('.question-text') || 
+              e.target.closest('.answer-text')) {
+            return; // Allow text selection
+          }
+          
+          // Flip the card
+          const cardInner = this.querySelector('.flip-card-inner');
+          cardInner.classList.toggle('flipped');
+          
+          // Add visual feedback
+          if (navigator.vibrate) navigator.vibrate(50);
+        });
+      });
+      
+      // Toggle answers in scroll mode
+      document.querySelectorAll(".toggle-answer").forEach(toggle => {
+        toggle.addEventListener("click", () => {
+          const answerBlock = toggle.nextElementSibling;
+          const plusIcon = toggle.querySelector(".plus-icon i");
+          const answerLabel = toggle.querySelector(".answer-label");
+          
+          if (answerBlock.classList.contains("show")) {
+            answerBlock.classList.remove("show");
+            plusIcon.className = "fas fa-plus";
+            answerLabel.textContent = "Show Answer";
+          } else {
+            answerBlock.classList.add("show");
+            plusIcon.className = "fas fa-minus";
+            answerLabel.textContent = "Hide Answer";
+          }
+        });
+      });
+      
+      // Switch between modes
+      modeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const mode = this.getAttribute('data-mode');
+          modeButtons.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          if (mode === 'flip') {
+            flipMode.style.display = 'block';
+            scrollMode.style.display = 'none';
+          } else if (mode === 'scroll') {
+            flipMode.style.display = 'none';
+            scrollMode.style.display = 'block';
+          }
+        });
+      });
+      
+      // Card navigation
+      const prevButton = document.getElementById('prevCard');
+      const nextButton = document.getElementById('nextCard');
+      const currentCardEl = document.getElementById('currentCard');
+      const totalCards = flipCards.length;
+      let currentIndex = 1;
+      
+      function updateCardVisibility() {
+        flipCards.forEach(card => {
+          card.classList.remove('active');
+          if (parseInt(card.getAttribute('data-index')) === currentIndex) {
+            card.classList.add('active');
+            // Reset flip state when changing cards
+            card.querySelector('.flip-card-inner').classList.remove('flipped');
+          }
+        });
+        currentCardEl.textContent = currentIndex;
+      }
+      
+      prevButton.addEventListener('click', function() {
+        if (currentIndex > 1) {
+          currentIndex--;
+          updateCardVisibility();
+        }
+      });
+      
+      nextButton.addEventListener('click', function() {
+        if (currentIndex < totalCards) {
+          currentIndex++;
+          updateCardVisibility();
+        }
+      });
+      
+      // Shuffle functionality
+      const shuffleBtn = document.getElementById('shuffleCards');
+      
+      shuffleBtn.addEventListener('click', function() {
+        const flipCardContainer = document.querySelector('.flip-card-container');
+        const flipCardsArray = Array.from(flipCards);
+        
+        // Fisher-Yates shuffle
+        for (let i = flipCardsArray.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [flipCardsArray[i], flipCardsArray[j]] = [flipCardsArray[j], flipCardsArray[i]];
+        }
+        
+        // Reindex and append cards
+        flipCardsArray.forEach((card, index) => {
+          card.setAttribute('data-index', index + 1);
+          flipCardContainer.appendChild(card);
+        });
+        
+        // Reset to first card
+        currentIndex = 1;
+        updateCardVisibility();
+        
+        // Show feedback
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.innerHTML = '<div class="toast-content"><i class="fas fa-check-circle"></i><span>Cards shuffled!</span></div>';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('active'), 10);
+        setTimeout(() => {
+          toast.classList.remove('active');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      });
+      
+      // Mobile swipe handling
+      let touchStartX = 0;
+      
+      if (flipCardContainer) {
+        flipCardContainer.addEventListener('touchstart', e => {
+          touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        flipCardContainer.addEventListener('touchend', e => {
+          const touchEndX = e.changedTouches[0].screenX;
+          const threshold = 50;
+          
+          if (touchEndX + threshold < touchStartX) {
+            // Swipe left - next card
+            nextButton.click();
+          } else if (touchEndX > touchStartX + threshold) {
+            // Swipe right - previous card
+            prevButton.click();
+          } else {
+            // Tap - flip card
+            const activeCard = document.querySelector('.flip-card.active');
+            if (activeCard && !e.target.classList.contains('word')) {
+              activeCard.click();
+            }
+          }
+        });
+      }
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') {
+          prevButton.click();
+        } else if (e.key === 'ArrowRight') {
+          nextButton.click();
+        } else if (e.key === ' ' || e.key === 'Enter') {
+          const activeCard = document.querySelector('.flip-card.active');
+          if (activeCard) activeCard.click();
+        }
+      });
+    });
+  </script>
+{% endblock %}

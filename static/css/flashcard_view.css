@@ -1,0 +1,934 @@
+/* RESET & Basic Setup */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  font-family: "Poppins", sans-serif;
+  background: var(--background);
+  color: var(--text-dark);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+/* Welcome Section */
+.welcome-section {
+  text-align: center;
+  margin: 3rem auto 2rem;
+  padding: 2.5rem 0;
+  background: var(--background-light);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px var(--shadow);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 900px;
+}
+
+.welcome-section::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  left: -50px;
+  width: 100px;
+  height: 100px;
+  background: var(--primary-light);
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+.welcome-section::after {
+  content: '';
+  position: absolute;
+  bottom: -30px;
+  right: -30px;
+  width: 80px;
+  height: 80px;
+  background: var(--primary-light);
+  border-radius: 50%;
+  opacity: 0.2;
+}
+
+.welcome-section h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.8rem;
+  color: var(--primary-dark);
+  font-weight: 700;
+  animation: fadeInUp 0.8s ease;
+}
+
+.tagline {
+  font-size: 1.3rem;
+  color: var(--text-light);
+  animation: fadeInUp 1s ease;
+}
+
+/* Main Page Wrapper */
+.flashcard-page {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto 3rem;
+  padding: 0 1.5rem;
+}
+
+/* Page Header */
+.page-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.6s ease;
+}
+.page-title {
+  font-size: 2.5rem;
+  color: var(--primary-dark);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-light);
+  font-size: 1.2rem;
+}
+
+/* Subject/Topic Info */
+.subject-info {
+  background: var(--background-light);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 15px var(--shadow);
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.8s ease;
+}
+
+.subject-info::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  left: -30px;
+  width: 60px;
+  height: 60px;
+  background: var(--primary-light);
+  border-radius: 50%;
+  opacity: 0.2;
+}
+
+.subject-info::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 40px;
+  height: 40px;
+  background: var(--primary-light);
+  border-radius: 50%;
+  opacity: 0.2;
+}
+
+.subject {
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.topic {
+  font-size: 1.3rem;
+  color: var(--text-light);
+}
+
+.subject span, .topic span {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+/* View Mode Toggle */
+.view-mode-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.8s ease;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  background: white;
+  border: 2px solid var(--primary-light);
+  color: var(--primary-dark);
+  padding: 0.8rem 1.5rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mode-btn i {
+  font-size: 1.2rem;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.mode-btn:hover:not(.active) {
+  background: var(--background-light);
+  transform: translateY(-2px);
+}
+
+/* Flip Mode Styles */
+.flip-container {
+  margin-bottom: 2rem;
+  animation: fadeIn 1s ease;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.control-btn {
+  background: white;
+  border: 2px solid var(--primary-light);
+  color: var(--primary-dark);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+  background: var(--primary-light);
+  color: white;
+  transform: scale(1.1);
+}
+
+.card-counter {
+  font-size: 1.2rem;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.flip-card-container {
+  perspective: 1500px;
+  -webkit-perspective: 1500px;
+  height: 400px;
+  max-width: 650px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.flip-card {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(50px) scale(0.95);
+  border-radius: 16px;
+  box-shadow: 0 15px 35px var(--shadow);
+}
+
+.flip-card.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(0) scale(1);
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s;
+  -webkit-transition: -webkit-transform 0.8s;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  box-shadow: 0 10px 30px var(--shadow);
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.flip-card-inner.flipped {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.flip-card-front {
+  background: white;
+  color: var(--text-dark);
+  box-shadow: 0 5px 20px rgba(255, 107, 149, 0.15);
+  -webkit-transform: rotateY(0deg);
+  transform: rotateY(0deg);
+  z-index: 2;
+}
+
+.flip-card-back {
+  background: #FF8EC7;
+  color: white;
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+  z-index: 1;
+}
+
+.flip-card:hover .flip-card-inner:not(.flipped) {
+  box-shadow: 0 15px 40px rgba(255, 107, 149, 0.2);
+  transform: translateY(-5px);
+}
+
+.flip-card-back .answer-text {
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.card-content {
+  max-width: 90%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px;
+}
+
+.side-label {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #FF8EC7;
+}
+
+.flip-card-back .side-label {
+  color: white;
+}
+
+.text-wrapper {
+  display: block;
+  text-align: left;
+  width: 100%;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  padding: 10px;
+  line-height: 1.5;
+}
+
+.question-text, .answer-text {
+  font-size: 1.5rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-dark);
+  width: 100%;
+  white-space: pre-line;
+  word-break: normal;
+  display: block;
+}
+
+/* Add direct style for question text to completely prevent vertical formatting */
+.question-text *, .answer-text * {
+  display: inline;
+  white-space: normal !important;
+}
+
+/* Remove word-by-word styles */
+.word {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  cursor: text;
+}
+
+.flip-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 2rem;
+  color: #888;
+  font-size: 1rem;
+}
+
+.flip-hint i {
+  font-size: 1.5rem;
+  animation: pulse 2s infinite;
+  display: inline-block;
+  color: #FF8EC7;
+}
+
+.reveal-message {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.reveal-message:hover {
+  opacity: 0.8;
+}
+
+.flip-card-inner.flipped .reveal-message {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.reveal-message i {
+  font-size: 1.5rem;
+  animation: pulse 2s infinite;
+  color: #888;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
+
+/* Scroll Mode Styles */
+.scroll-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  animation: fadeIn 0.8s ease;
+}
+
+.scroll-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px var(--shadow);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 107, 149, 0.1);
+  position: relative;
+  transform: translateY(0);
+}
+
+.scroll-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px var(--shadow);
+}
+
+.scroll-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, transparent 50%, rgba(255, 107, 179, 0.05) 50%);
+  border-radius: 0 0 0 100%;
+  z-index: 0;
+}
+
+.question-block {
+  padding: 2rem;
+  border-bottom: 1px solid rgba(255, 107, 149, 0.1);
+  position: relative;
+  z-index: 1;
+  background-image: radial-gradient(circle at 90% 10%, rgba(255, 107, 179, 0.05) 0%, transparent 70%);
+}
+
+.label {
+  color: var(--primary);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  display: inline-block;
+  padding: 0.4rem 1.2rem;
+  border-radius: 30px;
+  background: rgba(255, 107, 179, 0.1);
+}
+
+.toggle-answer {
+  padding: 1.2rem 2rem;
+  background: var(--background-light);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(255, 107, 149, 0.1);
+  position: relative;
+  z-index: 1;
+}
+
+.toggle-answer:hover {
+  background: rgba(255, 107, 149, 0.15);
+}
+
+.plus-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  font-size: 1rem;
+  box-shadow: 0 3px 10px rgba(255, 107, 149, 0.3);
+  transition: all 0.3s ease;
+}
+
+.toggle-answer:hover .plus-icon {
+  transform: rotate(90deg);
+}
+
+.answer-label {
+  color: var(--primary-dark);
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+.answer-block {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease, padding 0.5s ease;
+  padding: 0 2rem;
+  background: white;
+  position: relative;
+  z-index: 1;
+}
+
+.answer-block.show {
+  max-height: 500px;
+  padding: 2rem;
+  background: white;
+  background-image: radial-gradient(circle at 10% 90%, rgba(255, 107, 179, 0.05) 0%, transparent 70%);
+}
+
+/* Button Row */
+.button-row {
+  display: flex;
+  gap: 1rem;
+  margin: 2rem 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeInUp 1s ease;
+}
+
+.btn {
+  padding: 1rem 1.5rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 200px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  flex: 0 1 auto;
+  max-width: 250px;
+}
+
+.btn i {
+  font-size: 1.2rem;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.save-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px var(--shadow);
+}
+
+.create-btn {
+  background: white;
+  color: var(--primary-dark);
+  border: 2px solid var(--primary-light);
+}
+
+.create-btn:hover, .back-btn:hover {
+  background: var(--background-light);
+  transform: translateY(-3px);
+}
+
+.back-btn {
+  background: white;
+  color: var(--text-dark);
+  border: 2px solid #e0e0e0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .controls {
+    gap: 1rem;
+  }
+  
+  .flip-card-container {
+    height: 400px;
+  }
+  
+  .question-text, .answer-text {
+    font-size: 1.2rem;
+    padding: 0.8rem;
+  }
+  
+  .button-row {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .view-mode-toggle {
+    gap: 0.5rem;
+  }
+  
+  .mode-btn, .shuffle-btn {
+    font-size: 0.95rem;
+    padding: 0.8rem 1.2rem;
+  }
+  
+  .word {
+    padding: 3px 5px; /* Larger touch target on mobile */
+  }
+  
+  .scroll-card {
+    margin-bottom: 1.5rem;
+  }
+  
+  .question-block, .answer-block.show {
+    padding: 1.5rem;
+  }
+  
+  .flip-hint {
+    width: 150px;
+    padding: 0.4rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .flip-card-container {
+    height: 350px;
+  }
+  
+  .view-mode-toggle {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .mode-btn, .shuffle-btn {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .controls {
+    padding: 0 1rem;
+  }
+  
+  .card-counter {
+    font-size: 1rem;
+  }
+  
+  .control-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .question-text, .answer-text {
+    font-size: 1.1rem;
+    padding: 0.7rem;
+  }
+  
+  .side-label {
+    font-size: 1rem;
+    padding: 0.4rem 1rem;
+  }
+  
+  .scroll-card {
+    border-radius: 12px;
+  }
+  
+  .question-block {
+    padding: 1.2rem;
+  }
+  
+  .toggle-answer {
+    padding: 1rem 1.2rem;
+  }
+  
+  .plus-icon {
+    width: 25px;
+    height: 25px;
+  }
+  
+  .label, .answer-label {
+    font-size: 1rem;
+  }
+}
+
+/* Yellow highlighting for both modes */
+.highlighted {
+  font-weight: bold;
+  color: #8B5A00; /* Dark yellow/gold for readability */
+  background-color: rgba(255, 235, 59, 0.4); /* Yellow with transparency */
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  display: inline-block;
+  border: 1px solid rgba(255, 193, 7, 0.5);
+}
+
+.word:hover {
+  background-color: rgba(255, 235, 59, 0.2); /* Light yellow on hover */
+}
+
+/* Ensure highlighted words work in scroll mode */
+#scrollMode .word {
+  margin: 0 1px 5px 1px; 
+  display: inline-block;
+}
+
+#scrollMode .highlighted {
+  font-weight: bold;
+  color: #8B5A00; /* Dark yellow/gold */
+  background-color: rgba(255, 235, 59, 0.4); /* Yellow with transparency */
+  border-radius: 4px;
+  padding: 2px 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.5);
+}
+
+/* Shuffle button */
+.shuffle-btn {
+  background: white;
+  border: 2px solid var(--primary-light);
+  color: var(--primary-dark);
+  padding: 0.8rem 1.5rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.shuffle-btn:hover {
+  background: var(--background-light);
+  transform: translateY(-2px);
+}
+
+.shuffle-btn i {
+  font-size: 1.2rem;
+}
+
+/* Add stars effect to back card */
+.flip-card-back::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(white, rgba(255, 255, 255, 0.2) 2px, transparent 3px);
+  background-size: 50px 50px;
+  opacity: 0.2;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.flip-card-back::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  filter: blur(10px);
+  z-index: 0;
+  animation: floatStar 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes floatStar {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
+  50% { transform: translateY(-15px) scale(1.2); opacity: 0.6; }
+}
+
+/* Corner sparkles */
+.flip-card-front::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle, rgba(255, 107, 179, 0.8) 10%, rgba(255, 107, 179, 0.4) 30%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: sparkle 4s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.flip-card-front::after {
+  content: '';
+  position: absolute;
+  bottom: 20px;
+  right: 25px;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, rgba(255, 107, 179, 0.8) 10%, rgba(255, 107, 179, 0.4) 30%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: sparkle 5s ease-in-out 1s infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* More decorative elements */
+.flip-card-front .corner-decoration {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, transparent 50%, rgba(255, 107, 179, 0.1) 50%);
+  pointer-events: none;
+}
+
+.flip-card-back .corner-decoration {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(-45deg, transparent 50%, rgba(255, 255, 255, 0.1) 50%);
+  pointer-events: none;
+}
+
+/* Enhanced animated floating star */
+.floating-star {
+  position: absolute;
+  left: 15%;
+  bottom: 20%;
+  width: 30px;
+  height: 30px;
+  opacity: 0.8;
+  z-index: 0;
+  animation: rotateStar 7s linear infinite;
+  pointer-events: none;
+}
+
+.floating-star::before,
+.floating-star::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.6);
+}
+
+.floating-star::before {
+  transform: rotate(45deg) scale(0.2, 1);
+}
+
+.floating-star::after {
+  transform: rotate(-45deg) scale(0.2, 1);
+}
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.5); opacity: 0.7; }
+}
+
+@keyframes rotateStar {
+  0% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(180deg) translateY(-15px); }
+  100% { transform: rotate(360deg) translateY(0); }
+}

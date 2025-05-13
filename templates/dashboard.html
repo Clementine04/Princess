@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Princess's Website{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+{% block content %}
+  <div class="welcome-section">
+    <h1>Welcome to Princess's Space</h1>
+    <p class="tagline">Your personal learning companion</p>
+  </div>
+
+  <div class="love-note">
+    <div class="heart-icon">
+      <i class="fas fa-heart"></i>
+    </div>
+    <p class="note-text">Made with love to help you study better. I hope this makes your learning journey more fun and effective!</p>
+  </div>
+
+  <section class="features">
+    <div class="feature-card" data-url="{{ url_for('subjects') }}">
+      <div class="feature-icon">
+        <i class="fas fa-book"></i>
+      </div>
+      <h3>Subject Management</h3>
+      <p>Organize your learning materials into subjects and topics for better organization.</p>
+      <a href="{{ url_for('subjects') }}" class="feature-btn">Manage Subjects</a>
+    </div>
+
+    <div class="feature-card" data-url="{{ url_for('quiz_options') }}">
+      <div class="feature-icon">
+        <i class="fas fa-question-circle"></i>
+      </div>
+      <h3>Quiz Creator</h3>
+      <p>Generate interactive quizzes from your study materials to test your knowledge.</p>
+      <a href="{{ url_for('quiz_options') }}" class="feature-btn">Create Quiz</a>
+    </div>
+
+    <div class="feature-card" data-url="{{ url_for('flashcard') }}">
+      <div class="feature-icon">
+        <i class="fas fa-clone"></i>
+      </div>
+      <h3>Flashcard Maker</h3>
+      <p>Create beautiful flashcards to help you memorize and learn more effectively.</p>
+      <a href="{{ url_for('flashcard') }}" class="feature-btn">Create Flashcards</a>
+    </div>
+  </section>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Style the feature buttons like links
+      const featureButtons = document.querySelectorAll('.feature-btn');
+      featureButtons.forEach(btn => {
+        btn.style.textDecoration = 'none';
+        btn.style.display = 'inline-block';
+      });
+      
+      // Make the entire card clickable for larger touch targets
+      const featureCards = document.querySelectorAll('.feature-card');
+      featureCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+          // Only navigate if not clicking on the button itself
+          if (!e.target.classList.contains('feature-btn')) {
+            const url = this.getAttribute('data-url');
+            window.location.href = url;
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}

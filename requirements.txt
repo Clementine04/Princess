@@ -1,0 +1,8 @@
+flask
+flask-sqlalchemy
+google-generativeai
+jinja2
+pyttsx3
+PyPDF2
+python-docx
+python-pptx 

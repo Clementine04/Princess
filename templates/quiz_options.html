@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Quiz Options - Princess's Website{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/quiz_options.css') }}">
+{% endblock %}
+{% block content %}
+  <div class="welcome-section">
+    <h1>Create Quiz for {{ subject.name }}</h1>
+    <p class="tagline">Generate AI-powered quizzes from your study materials to test your knowledge.</p>
+  </div>
+
+  <div class="quiz-options-container">
+    <div class="card options-card">
+      <form action="{{ url_for('quiz') }}" method="POST" enctype="multipart/form-data" class="options-form">
+        <input type="hidden" name="subject_id" value="{{ subject.id }}">
+        
+        <div class="form-group">
+          <label for="topic_id">Topic (Optional)</label>
+          <select name="topic_id" id="topic_id">
+            <option value="">All topics in {{ subject.name }}</option>
+            {% for topic in topics %}
+              <option value="{{ topic.id }}">{{ topic.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="questionType">Question Type</label>
+          <select name="questionType" id="questionType">
+            <option value="Multiple Choice">Multiple Choice</option>
+            <option value="True/False">True/False</option>
+            <option value="Identification">Identification</option>
+            <option value="Enumeration">Enumeration</option>
+            <option value="Mixed">Mixed</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="difficulty">Difficulty Level</label>
+          <select name="difficulty" id="difficulty">
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="numQuestions">Number of Questions</label>
+          <div class="number-input">
+            <button type="button" class="number-btn minus"><i class="fas fa-minus"></i></button>
+            <input type="number" name="numQuestions" id="numQuestions" min="1" max="20" value="5">
+            <button type="button" class="number-btn plus"><i class="fas fa-plus"></i></button>
+          </div>
+        </div>
+        
+        <div class="form-group file-upload">
+          <label for="fileUpload">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Upload Study Material (PDF, DOCX, PPT/PPTX, TXT)</span>
+          </label>
+          <input type="file" name="fileUpload" id="fileUpload" accept=".pdf, .docx, .ppt, .pptx, .txt" required>
+          <div class="file-name" id="fileName">No file selected</div>
+        </div>
+        
+        <div class="button-group">
+          <button type="submit" class="btn generate">
+            <i class="fas fa-magic"></i> Generate Quiz
+          </button>
+          <a href="{{ url_for('view_subject', subject_id=subject.id) }}" class="btn back">
+            <i class="fas fa-arrow-left"></i> Back to Subject
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Display selected filename
+    document.getElementById('fileUpload').addEventListener('change', function() {
+      const fileName = this.files[0] ? this.files[0].name : 'No file selected';
+      document.getElementById('fileName').textContent = fileName;
+    });
+    
+    // Number input buttons
+    document.querySelector('.number-btn.minus').addEventListener('click', function() {
+      const input = document.getElementById('numQuestions');
+      if (input.value > parseInt(input.min)) {
+        input.value = parseInt(input.value) - 1;
+      }
+    });
+    
+    document.querySelector('.number-btn.plus').addEventListener('click', function() {
+      const input = document.getElementById('numQuestions');
+      if (input.value < parseInt(input.max)) {
+        input.value = parseInt(input.value) + 1;
+      }
+    });
+    
+    // Form animation
+    document.addEventListener('DOMContentLoaded', function() {
+      const formElements = document.querySelectorAll('.form-group');
+      formElements.forEach((element, index) => {
+        setTimeout(() => {
+          element.classList.add('animated');
+        }, 100 * index);
+      });
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Quiz - Aral A.I{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/quizmaker_ai.css') }}">
+{% endblock %}
+{% block content %}
+  <div class="welcome-section">
+    <h1>Answer Your Quiz</h1>
+    <p class="tagline">Test your knowledge</p>
+  </div>
+
+  {% if result is defined %}
+    <div class="result-banner">
+      <div class="score-info">
+        <div class="score-circle">
+          <span class="score-number">{{ result.score }}</span>
+          <span class="score-total">/ {{ result.attempted }}</span>
+        </div>
+        <div class="percentage">{{ result.percentage }}%</div>
+      </div>
+    </div>
+  {% endif %}
+
+  <form action="{{ url_for('submit_quiz') }}" method="POST" class="quiz-form">
+    {% for index in range(quiz.questions|length) %}
+      <div class="question-card">
+        <div class="question-header">
+          <span class="question-number">{{ index + 1 }}</span>
+          <div class="question-type">
+            {% if quiz.question_types[index] == "MC" %}
+              <i class="fas fa-list-ul"></i> Multiple Choice
+            {% elif quiz.question_types[index] == "TF" %}
+              <i class="fas fa-toggle-on"></i> True/False
+            {% elif quiz.question_types[index] == "ENUM" %}
+              <i class="fas fa-tasks"></i> Enumeration
+            {% else %}
+              <i class="fas fa-pen"></i> Identification
+            {% endif %}
+          </div>
+        </div>
+        
+        <p class="question-text">{{ quiz.questions[index] }}</p>
+
+        {% if quiz.question_types[index] == "MC" or quiz.question_types[index] == "TF" %}
+          <div class="options">
+            {% for option in quiz.options[index] %}
+              <label class="option-label">
+                <input type="radio" name="q{{ index }}" value="{{ option }}" required>
+                <span class="radio-custom"></span>
+                <span class="option-text">{{ option }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-answer">
+            <input type="text" name="q{{ index }}" class="answer-input" 
+              placeholder="{% if quiz.question_types[index] == 'ENUM' %}Enter items separated by commas...{% else %}Type your answer...{% endif %}">
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <div class="button-group">
+      <button type="submit" class="btn submit-btn">
+        <i class="fas fa-check-circle"></i> Submit Quiz
+      </button>
+      <a href="{{ url_for('dashboard') }}" class="btn back-btn">
+        <i class="fas fa-home"></i> Back to Dashboard
+      </a>
+    </div>
+  </form>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Animation for questions
+      const questions = document.querySelectorAll('.question-card');
+      questions.forEach((question, index) => {
+        setTimeout(() => {
+          question.classList.add('animated');
+        }, 100 * index);
+      });
+      
+      // Highlight selected radio buttons
+      const radioInputs = document.querySelectorAll('input[type="radio"]');
+      radioInputs.forEach(input => {
+        input.addEventListener('change', function() {
+          // Remove active class from all labels in the same group
+          const name = this.getAttribute('name');
+          document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+            radio.closest('.option-label').classList.remove('active');
+          });
+          
+          // Add active class to the selected label
+          this.closest('.option-label').classList.add('active');
+        });
+      });
+    });
+  </script>
+{% endblock %}

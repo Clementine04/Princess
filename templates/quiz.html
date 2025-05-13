@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+{% block title %}Quiz - Princess's Website{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/quiz.css') }}">
+{% endblock %}
+{% block content %}
+  <div class="welcome-section">
+    <p class="tagline">Test your knowledge about {{ subject }}{% if topic %} - {{ topic }}{% endif %}</p>
+  </div>
+
+  <div class="quiz-container">
+    <div id="quizContent">
+      <div id="quizProgress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text">Question <span id="currentQuestion">1</span> of <span id="totalQuestions">{{ questions|length }}</span></div>
+      </div>
+
+      <div id="questionContainer">
+        <!-- Questions will be injected here by JavaScript -->
+      </div>
+
+      <div class="button-row">
+        <button id="prevBtn" class="btn nav-btn" disabled>
+          <i class="fas fa-arrow-left"></i> Previous
+        </button>
+        <button id="nextBtn" class="btn nav-btn">
+          Next <i class="fas fa-arrow-right"></i>
+        </button>
+        <button id="submitBtn" class="btn submit-btn" style="display: none;">
+          Submit Quiz <i class="fas fa-check-circle"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="resultsContainer" style="display: none;">
+      <div class="results-header">
+        <h2>Quiz Results</h2>
+        <div class="score-display">
+          <div class="score-circle">
+            <span id="scoreValue">0</span>
+            <span id="totalValue">/{{ questions|length }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="answerReview"></div>
+
+      <div class="button-row">
+        <a href="{{ url_for('quiz_options', subject_id=session.get('quiz_subject_id')) }}" class="btn back-btn">
+          <i class="fas fa-redo"></i> Take Another Quiz
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn home-btn">
+          <i class="fas fa-home"></i> Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Quiz data from server
+    const questions = {{ questions|tojson }};
+    const answers = {{ answers|tojson }};
+    const options = {{ options|tojson }};
+    const questionTypes = {{ question_types|tojson }};
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let userAnswers = Array(questions.length).fill('');
+    
+    // DOM elements
+    const questionContainer = document.getElementById('questionContainer');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const progressFill = document.getElementById('progressFill');
+    const currentQuestionSpan = document.getElementById('currentQuestion');
+    const quizContent = document.getElementById('quizContent');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const scoreValue = document.getElementById('scoreValue');
+    const answerReview = document.getElementById('answerReview');
+    
+    // Initialize quiz
+    function initQuiz() {
+      showQuestion(0);
+      updateProgress();
+      
+      // Add event listeners
+      prevBtn.addEventListener('click', previousQuestion);
+      nextBtn.addEventListener('click', nextQuestion);
+      submitBtn.addEventListener('click', submitQuiz);
+    }
+    
+    // Show question by index
+    function showQuestion(index) {
+      const question = questions[index];
+      const type = questionTypes[index];
+      
+      // Clear question container
+      questionContainer.innerHTML = '';
+      
+      // Create question header
+      const questionHeader = document.createElement('div');
+      questionHeader.className = 'question-header';
+      questionHeader.innerHTML = `
+        <div class="question-type ${type.toLowerCase()}">${getQuestionTypeName(type)}</div>
+        <h3 class="question-text">${question}</h3>
+      `;
+      questionContainer.appendChild(questionHeader);
+      
+      // Create answer options based on question type
+      const answerContainer = document.createElement('div');
+      answerContainer.className = 'answer-container';
+      
+      if (type === 'MC') {
+        // Multiple choice
+        options[index].forEach((option, i) => {
+          const optionDiv = document.createElement('div');
+          optionDiv.className = 'option';
+          const isSelected = userAnswers[index] === option;
+          if (isSelected) optionDiv.classList.add('selected');
+          
+          optionDiv.innerHTML = `
+            <input type="radio" name="q${index}" id="q${index}opt${i}" value="${option}" ${isSelected ? 'checked' : ''}>
+            <label for="q${index}opt${i}">${option}</label>
+          `;
+          optionDiv.addEventListener('click', () => {
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            optionDiv.classList.add('selected');
+            userAnswers[index] = option;
+            updateProgress();
+          });
+          answerContainer.appendChild(optionDiv);
+        });
+      } else if (type === 'TF') {
+        // True/False
+        ['True', 'False'].forEach((option, i) => {
+          const optionDiv = document.createElement('div');
+          optionDiv.className = 'option tf-option';
+          const isSelected = userAnswers[index] === option;
+          if (isSelected) optionDiv.classList.add('selected');
+          
+          optionDiv.innerHTML = `
+            <input type="radio" name="q${index}" id="q${index}opt${i}" value="${option}" ${isSelected ? 'checked' : ''}>
+            <label for="q${index}opt${i}">${option}</label>
+          `;
+          optionDiv.addEventListener('click', () => {
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            optionDiv.classList.add('selected');
+            userAnswers[index] = option;
+            updateProgress();
+          });
+          answerContainer.appendChild(optionDiv);
+        });
+      } else if (type === 'ID' || type === 'ENUM') {
+        // Identification or Enumeration
+        const textareaDiv = document.createElement('div');
+        textareaDiv.className = 'text-answer';
+        
+        textareaDiv.innerHTML = `
+          <textarea placeholder="${type === 'ENUM' ? 'Enter comma-separated items...' : 'Type your answer here...'}" 
+            rows="3">${userAnswers[index] || ''}</textarea>
+        `;
+        
+        const textarea = textareaDiv.querySelector('textarea');
+        textarea.addEventListener('input', () => {
+          userAnswers[index] = textarea.value;
+          updateProgress();
+        });
+        
+        answerContainer.appendChild(textareaDiv);
+      }
+      
+      questionContainer.appendChild(answerContainer);
+      
+      // Update navigation buttons
+      prevBtn.disabled = index === 0;
+      if (index === questions.length - 1) {
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = 'inline-flex';
+      } else {
+        nextBtn.style.display = 'inline-flex';
+        submitBtn.style.display = 'none';
+      }
+      
+      // Update progress indicator
+      currentQuestionSpan.textContent = index + 1;
+    }
+    
+    // Navigate to previous question
+    function previousQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        showQuestion(currentQuestionIndex);
+      }
+    }
+    
+    // Navigate to next question
+    function nextQuestion() {
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        showQuestion(currentQuestionIndex);
+      }
+    }
+    
+    // Update progress indicators
+    function updateProgress() {
+      const answeredCount = userAnswers.filter(answer => answer !== '').length;
+      const progressPercent = (answeredCount / questions.length) * 100;
+      progressFill.style.width = `${progressPercent}%`;
+    }
+    
+    // Get full question type name
+    function getQuestionTypeName(type) {
+      switch(type) {
+        case 'MC': return 'Multiple Choice';
+        case 'TF': return 'True/False';
+        case 'ID': return 'Identification';
+        case 'ENUM': return 'Enumeration';
+        default: return type;
+      }
+    }
+    
+    // Calculate quiz score
+    function calculateScore() {
+      score = 0;
+      const results = [];
+      
+      userAnswers.forEach((answer, index) => {
+        const question = questions[index];
+        const correctAnswer = getCorrectAnswer(index);
+        const type = questionTypes[index];
+        let isCorrect = false;
+        
+        if (type === 'MC' || type === 'TF') {
+          // For multiple choice and true/false, be forgiving with case and spacing
+          isCorrect = normalizeString(answer) === normalizeString(correctAnswer);
+        } else if (type === 'ID') {
+          isCorrect = compareAnswers(answer, correctAnswer);
+        } else if (type === 'ENUM') {
+          isCorrect = compareEnumerationAnswers(answer, correctAnswer);
+        }
+        
+        if (isCorrect) score++;
+        
+        results.push({
+          question,
+          userAnswer: answer,
+          correctAnswer,
+          isCorrect,
+          type
+        });
+      });
+      
+      return results;
+    }
+    
+    // Helper function to normalize strings for comparison
+    function normalizeString(str) {
+      return str ? str.toLowerCase().trim().replace(/\s+/g, ' ') : '';
+    }
+    
+    // Helper function to calculate string similarity (for typo tolerance)
+    function calculateSimilarity(str1, str2) {
+      if (!str1 || !str2) return 0;
+      
+      // Convert strings to lowercase and trim
+      str1 = normalizeString(str1);
+      str2 = normalizeString(str2);
+      
+      // If they're identical, return 1
+      if (str1 === str2) return 1;
+      
+      // Calculate Levenshtein distance
+      const m = str1.length;
+      const n = str2.length;
+      
+      // Create 2D array for dynamic programming
+      const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
+      
+      // Initialize first row and column
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      
+      // Fill dp table
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,      // deletion
+            dp[i][j - 1] + 1,      // insertion
+            dp[i - 1][j - 1] + cost // substitution
+          );
+          
+          // Transposition (swap two adjacent characters)
+          if (i > 1 && j > 1 && str1[i - 1] === str2[j - 2] && str1[i - 2] === str2[j - 1]) {
+            dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+          }
+        }
+      }
+      
+      // Return similarity score (0 to 1, where 1 is perfect match)
+      const maxLen = Math.max(m, n);
+      return maxLen === 0 ? 1 : (maxLen - dp[m][n]) / maxLen;
+    }
+    
+    // Helper to get correct answer from server data
+    function getCorrectAnswer(index) {
+      return answers[index];
+    }
+    
+    // Compare user answer with correct answer (smart matching)
+    function compareAnswers(userAnswer, correctAnswer) {
+      if (!userAnswer) return false;
+      
+      // Normalize both answers
+      const normUserAnswer = normalizeString(userAnswer);
+      const normCorrectAnswer = normalizeString(correctAnswer);
+      
+      // Try exact match first
+      if (normUserAnswer === normCorrectAnswer) return true;
+      
+      // Try flexible matching: remove punctuation
+      const cleanUserAnswer = normUserAnswer.replace(/[.,;?!'"()]/g, '');
+      const cleanCorrectAnswer = normCorrectAnswer.replace(/[.,;?!'"()]/g, '');
+      
+      // Check if answers contain each other's main keywords
+      if (cleanUserAnswer.includes(cleanCorrectAnswer) || 
+          cleanCorrectAnswer.includes(cleanUserAnswer)) {
+        return true;
+      }
+      
+      // Check for plurals (simple version)
+      if (cleanUserAnswer + 's' === cleanCorrectAnswer || 
+          cleanUserAnswer === cleanCorrectAnswer + 's') {
+        return true;
+      }
+      
+      // Check for string similarity to catch typos
+      const similarity = calculateSimilarity(cleanUserAnswer, cleanCorrectAnswer);
+      
+      // Adjust the threshold based on answer length
+      const thresholdBase = 0.85; // Base similarity threshold
+      const lengthFactor = Math.min(cleanCorrectAnswer.length, 10) / 10; // Length factor (0.1 to 1)
+      const threshold = thresholdBase - (0.1 * (1 - lengthFactor)); // Adjust threshold based on length
+      
+      return similarity >= threshold;
+    }
+    
+    // Compare enumeration answers (smart matching)
+    function compareEnumerationAnswers(userAnswer, correctAnswer) {
+      if (!userAnswer) return false;
+      
+      // Normalize and split the answers
+      const userItems = normalizeString(userAnswer)
+                         .replace(/[;|\/]/g, ',') // Allow semicolons, pipes, or slashes as separators
+                         .split(',')
+                         .map(item => item.trim())
+                         .filter(item => item.length > 0);
+                         
+      const correctItems = normalizeString(correctAnswer)
+                           .split(',')
+                           .map(item => item.trim())
+                           .filter(item => item.length > 0);
+      
+      if (userItems.length === 0 || correctItems.length === 0) return false;
+      
+      // Find matches, allowing for imperfect matches
+      const matchedItems = [];
+      const usedCorrectItems = new Set();
+      
+      // First try to find exact matches
+      userItems.forEach(userItem => {
+        for (let i = 0; i < correctItems.length; i++) {
+          if (usedCorrectItems.has(i)) continue;
+          
+          if (userItem === correctItems[i]) {
+            matchedItems.push(userItem);
+            usedCorrectItems.add(i);
+            break;
+          }
+        }
+      });
+      
+      // Then try to find partial/fuzzy matches for remaining items
+      userItems.forEach(userItem => {
+        if (matchedItems.includes(userItem)) return;
+        
+        let bestMatch = -1;
+        let bestSimilarity = 0;
+        
+        for (let i = 0; i < correctItems.length; i++) {
+          if (usedCorrectItems.has(i)) continue;
+          
+          // Check if one contains the other
+          const cleanUserItem = userItem.replace(/[.,;?!'"()]/g, '');
+          const cleanCorrectItem = correctItems[i].replace(/[.,;?!'"()]/g, '');
+          
+          if (cleanUserItem.includes(cleanCorrectItem) || cleanCorrectItem.includes(cleanUserItem)) {
+            matchedItems.push(userItem);
+            usedCorrectItems.add(i);
+            return;
+          }
+          
+          // Check for similar strings (typos)
+          const similarity = calculateSimilarity(cleanUserItem, cleanCorrectItem);
+          if (similarity > 0.8 && similarity > bestSimilarity) {
+            bestMatch = i;
+            bestSimilarity = similarity;
+          }
+        }
+        
+        // Use the best match if it's above threshold
+        if (bestMatch >= 0) {
+          matchedItems.push(userItem);
+          usedCorrectItems.add(bestMatch);
+        }
+      });
+      
+      // Calculate match percentage - more forgiving for longer lists
+      const matchPercentage = usedCorrectItems.size / correctItems.length;
+      
+      // Adaptive threshold based on list length - be more lenient with longer lists
+      const minMatchPercentage = correctItems.length <= 3 ? 0.7 : // 70% for short lists
+                               correctItems.length <= 6 ? 0.6 : // 60% for medium lists
+                               0.5;                             // 50% for long lists
+      
+      return matchPercentage >= minMatchPercentage;
+    }
+    
+    // Submit quiz and show results
+    function submitQuiz() {
+      const results = calculateScore();
+      
+      // Display score
+      scoreValue.textContent = score;
+      
+      // Display answer review
+      answerReview.innerHTML = '';
+      results.forEach((result, index) => {
+        const resultDiv = document.createElement('div');
+        resultDiv.className = `result-item ${result.isCorrect ? 'correct' : 'incorrect'}`;
+        
+        resultDiv.innerHTML = `
+          <div class="result-question">
+            <span class="question-number">${index + 1}</span>
+            <span class="result-icon">
+              <i class="fas ${result.isCorrect ? 'fa-check' : 'fa-times'}"></i>
+            </span>
+            <div class="question-text">
+              <p>${result.question}</p>
+              <div class="answer-details">
+                <div class="user-answer">
+                  <span>Your answer:</span> 
+                  <span class="answer ${result.isCorrect ? 'correct-text' : 'incorrect-text'}">
+                    ${result.userAnswer || 'No answer provided'}
+                  </span>
+                </div>
+                ${!result.isCorrect ? `
+                <div class="correct-answer">
+                  <span>Correct answer:</span> 
+                  <span class="answer correct-text">${result.correctAnswer}</span>
+                </div>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+        
+        answerReview.appendChild(resultDiv);
+      });
+      
+      // Hide quiz content, show results
+      quizContent.style.display = 'none';
+      resultsContainer.style.display = 'block';
+      
+      // Save results to server
+      fetch('/submit_quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          score: score,
+          total: questions.length
+        })
+      })
+      .then(response => response.json())
+      .then(data => console.log(data))
+      .catch(error => console.error('Error saving quiz results:', error));
+    }
+    
+    // Initialize quiz when page loads
+    document.addEventListener('DOMContentLoaded', initQuiz);
+  </script>
+{% endblock %} 
