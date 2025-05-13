@@ -14,9 +14,9 @@ from PyPDF2 import PdfReader
 import docx
 from pptx import Presentation
 
-# Import database models
-from models.database import db, Subject, Topic, Flashcard, QuizResult
-
+# Database imports
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 API_KEY = os.environ.get("GOOGLE_GENAI_API_KEY", "AIzaSyDdSvIewEdADKXSWYriZJGqONj-KCXdsaU")
 genai.configure(api_key=API_KEY)
@@ -28,6 +28,44 @@ app.secret_key = 'your_secret_key'
 # Configure the SQLAlchemy database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///princess.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Create a SQLAlchemy instance
+db = SQLAlchemy()
+
+# Subject model for the database
+class Subject(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    topics = db.relationship("Topic", backref="subject", lazy=True, cascade="all, delete-orphan")
+
+# Topic model for the database
+class Topic(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    subject_id = db.Column(db.Integer, db.ForeignKey("subject.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    flashcards = db.relationship("Flashcard", backref="topic", lazy=True, cascade="all, delete-orphan")
+
+# Flashcard model for the database
+class Flashcard(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    front = db.Column(db.Text, nullable=False)
+    back = db.Column(db.Text, nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey("topic.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Quiz result model for tracking user performance
+class QuizResult(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey("subject.id"), nullable=True)
+    score = db.Column(db.Integer, nullable=False)
+    total_questions = db.Column(db.Integer, nullable=False)
+    quiz_type = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    subject = db.relationship("Subject", backref="quiz_results")
 
 # Initialize the database with the app
 db.init_app(app)
@@ -765,7 +803,7 @@ def view_flashcards(topic_id):
         return redirect(url_for('view_subject', subject_id=topic.subject_id))
     
     # Convert database flashcards to format expected by the template
-    formatted_flashcards = [{'question': card.question, 'answer': card.answer} for card in flashcards]
+    formatted_flashcards = [{'question': card.front, 'answer': card.back} for card in flashcards]
     
     return render_template('flashcard_view.html', 
                           flashcards=formatted_flashcards, 
@@ -978,7 +1016,7 @@ def submit_quiz():
         quiz_result = QuizResult(
             score=score,
             total_questions=total,
-            question_type=question_type,
+            quiz_type=question_type,
             difficulty=difficulty,
             subject_id=subject_id,
             topic_id=topic_id if topic_id else None
@@ -1067,8 +1105,8 @@ def flashcard(topic_id=None):
             # Save flashcards to database
             for card in flashcards:
                 new_flashcard = Flashcard(
-                    question=card['question'],
-                    answer=card['answer'],
+                    front=card['question'],
+                    back=card['answer'],
                     topic_id=topic_id
                 )
                 db.session.add(new_flashcard)
